@@ -1,7 +1,8 @@
 import { MessageCard, Message } from "@/components/MessageCard";
+import axios from "@/lib/axios";
 import { cn } from "@/lib/utils";
-import axios from "axios";
-import React, { useEffect, useState } from "react";
+import WebSocketService from "@/services/WebSocketService";
+import { Fragment, useEffect, useState } from "react";
 import ReactDOM from "react-dom";
 
 interface Column {
@@ -70,18 +71,26 @@ export default function Messages() {
     }, [tempHeight, tempMessage]);
 
     useEffect(() => {
+        // const webSocketService = new WebSocketService('');
+
+        // const handleMessage = (message: Message) => {
+        //     setTempMessage({ ...message, sentDate: new Date(message.sentDate) });
+        // };
+
+        // webSocketService.connect(handleMessage, console.error, console.log);
+
         axios.get("/Event/Messages").then((data) => {
             const messages: Message[] = [...data.data];
-    
+
             let i = 0;
             const processMessage = () => {
                 if (i < messages.length) {
-                    setTempMessage({...messages[i], sentDate: new Date(messages[i].sentDate)});
+                    setTempMessage({ ...messages[i], sentDate: new Date(messages[i].sentDate) });
                     i++;
-                    setTimeout(processMessage, 1500); // Tempo para garantir atualização do estado
+                    setTimeout(processMessage, 1500);
                 }
             };
-    
+
             processMessage();
         });
 
@@ -98,7 +107,10 @@ export default function Messages() {
             });
         }, 3000);
 
-        return () => clearInterval(interval);
+        return () => {
+            // webSocketService.disconnect();
+            clearInterval(interval);
+        }
     }, []);
 
     const handleHeightCalculation = (element: HTMLDivElement | null) => {
@@ -114,16 +126,16 @@ export default function Messages() {
                 className={cn('grid bg-zinc-950 w-full h-screen overflow-hidden absolute')}
             >
                 {layout.map((linhas, colIndex) => (
-                    <React.Fragment key={colIndex}>
+                    <Fragment key={colIndex}>
                         <div className={cn('flex flex-col')}>
                             {linhas && linhas.messages.map((mensagem, rowIndex) => (
                                 <MessageCard
-                                    message={{ ...mensagem, col: colIndex, row: rowIndex, isNew: rowIndex == 0 && lastColumn == colIndex, isChosenColumn: lastColumn == colIndex }}
+                                    message={{ ...mensagem, isNew: rowIndex == 0 && lastColumn == colIndex, isChosenColumn: lastColumn == colIndex }}
                                     key={`${colIndex}-${rowIndex}`}
                                 />
                             ))}
                         </div>
-                    </React.Fragment>
+                    </Fragment>
                 ))}
             </div>
 
