@@ -1,14 +1,14 @@
-// src/App.tsx
 import React from 'react';
 import Message from './pages/Messages';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 const App: React.FC = () => {
   return (
-    <div className="">
-      <div className="">
-        <Message />
-      </div>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path='/' element={<Message />} />
+      </Routes>
+    </BrowserRouter>
   );
 };
 

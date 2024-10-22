@@ -1,221 +1,145 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { MessageCard, Message } from "@/components/MessageCard";
+import { cn } from "@/lib/utils";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import ReactDOM from "react-dom";
 
-type MessageType = { message: string; user: string; sentDate: string; height: number; new: boolean; };
+interface Column {
+    messages: Message[];
+    visualHeight: number;
+    height: number;
+}
 
-const MessageBoard: React.FC = () => {
-    const [numColumns, setNumColumns] = useState(5);
-
-    const [columns, setColumns] = useState<MessageType[][]>(
-        Array.from({ length: numColumns }, () => [])
-    );
-
-    const [heights, setHeights] = useState<number[]>(
-        Array.from({ length: numColumns }, () => 0)
-    );
-
-    const [visualHeights, setVisualHeights] = useState<number[]>(
-        Array.from({ length: numColumns }, () => 0)
-    );
-
-    const [stack, setStack] = useState<MessageType[]>([]);
-
-    const [messageIndex, setMessageIndex] = useState(0);
-
-    const messageList = [
-        { message: 'Hello!', user: 'Alice' },
-        { message: 'This is a longer message that might take up more space.', user: 'Bob' },
-        { message: 'Short one.', user: 'Charlie' },
-        { message: 'Another long message that will occupy a bit more room than others.', user: 'Alice' },
-        { message: 'How about this one? It\'s just a normal message.', user: 'David' },
-        { message: 'A short message.', user: 'Eve' },
-        { message: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum.', user: 'Frank' },
-        { message: 'Short again.', user: 'Alice' },
-        { message: 'Just a quick note.', user: 'Bob' },
-        { message: 'And here\'s another message to fill the column!', user: 'Charlie' },
-        { message: 'Hello!', user: 'Alice' },
-        { message: 'This is a longer message that might take up more space.', user: 'Bob' },
-        { message: 'Short one.', user: 'Charlie' },
-        { message: 'Another long message that will occupy a bit more room than others.', user: 'Alice' },
-        { message: 'How about this one? It\'s just a normal message.', user: 'David' },
-        { message: 'A short message.', user: 'Eve' },
-        { message: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum.', user: 'Frank' },
-        { message: 'Short again.', user: 'Alice' },
-        { message: 'Just a quick note.', user: 'Bob' },
-        { message: 'And here\'s another message to fill the column!', user: 'Charlie' },
-        { message: 'Hello!', user: 'Alice' },
-        { message: 'This is a longer message that might take up more space.', user: 'Bob' },
-        { message: 'Short one.', user: 'Charlie' },
-        { message: 'Another long message that will occupy a bit more room than others.', user: 'Alice' },
-        { message: 'How about this one? It\'s just a normal message.', user: 'David' },
-        { message: 'A short message.', user: 'Eve' },
-        { message: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum.', user: 'Frank' },
-        { message: 'Short again.', user: 'Alice' },
-        { message: 'Just a quick note.', user: 'Bob' },
-        { message: 'And here\'s another message to fill the column!', user: 'Charlie' },
-        { message: 'This is a longer message that might take up more space.', user: 'Bob' },
-        { message: 'Short one.', user: 'Charlie' },
-        { message: 'Another long message that will occupy a bit more room than others.', user: 'Alice' },
-        { message: 'How about this one? It\'s just a normal message.', user: 'David' },
-        { message: 'A short message.', user: 'Eve' },
-        { message: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum.', user: 'Frank' },
-        { message: 'Short again.', user: 'Alice' },
-        { message: 'Just a quick note.', user: 'Bob' },
-        { message: 'And here\'s another message to fill the column!', user: 'Charlie' },
-    ];
-
-    const lastCardRef = useRef<HTMLDivElement | null>(null);
-    const lastColumnIndex = useRef<number | null>(null);
+export default function Messages() {
+    const [colsNumber, setColsNumber] = useState<number>(5);
+    const [layout, setLayout] = useState<Column[]>(Array.from({ length: colsNumber }, () => ({ messages: [], visualHeight: 0, height: 0 })));
+    const [tempMessage, setTempMessage] = useState<Message | null>(null);
+    const [tempHeight, setTempHeight] = useState<number | null>(null);
+    const [hiddenMessages, setHiddenMessages] = useState<Message[]>([]);
+    const [lastColumn, setLastColumn] = useState<number>(0);
 
     const getShortestColumn = () => {
-        return heights.indexOf(Math.min(...heights));
+        let min: number = layout[0].height;
+        let index: number = 0;
+
+        for (let i = 0; i < layout.length; i++) {
+            const coluna = layout[i];
+
+            if (coluna.height < min) {
+                min = coluna.height;
+                index = i;
+            }
+        }
+
+        return index;
     };
 
-    const sendMessage = (message: string, user: string) => {
-        addMessageToScreen({ message, user, height: 0, sentDate: new Date().toLocaleString('pt-BR'), new: true })
-    }
-
-    const addMessageToScreen = (message: MessageType) => {
-        const columnIndex = getShortestColumn();
-
-        setColumns(prevColumns => {
-            const newColumns = [...prevColumns];
-            newColumns[columnIndex] = [
-                message,
-                ...newColumns[columnIndex],
-            ];
-            return newColumns;
-        });
-
-        lastColumnIndex.current = columnIndex;
-    }
-
     useEffect(() => {
-        const interval = setInterval(() => {
-            if (stack.length) {
-                const msg = stack.pop();
-                msg && addMessageToScreen({ ...msg })
-            } else {
-                clearInterval(interval);
-            }
-        }, 1000);
+        if (tempHeight !== null && tempMessage !== null) {
+            setLayout((prevLayout) => {
+                const newLayout = [...prevLayout];
+                const idx = getShortestColumn();
 
-        return () => clearInterval(interval);
-    }, [stack, numColumns]);
+                tempMessage.height = tempHeight;
+                tempMessage.isNew = true;
+                newLayout[idx].messages.unshift(tempMessage);
+                newLayout[idx].height += tempHeight;
+                newLayout[idx].visualHeight += tempHeight;
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            if (messageIndex < messageList.length) {
-                const msg = messageList[messageIndex];
-                sendMessage(msg.message, msg.user);
-                setMessageIndex(prevIndex => prevIndex + 1);
-            } else {
-                clearInterval(interval);
-            }
-        }, 200);
+                setLastColumn(idx);
 
-        return () => clearInterval(interval);
-    }, [messageIndex, messageList, numColumns]);
+                while (newLayout[idx].visualHeight - (newLayout[idx].messages[newLayout[idx].messages.length - 1].height ?? 0) > window.innerHeight && newLayout[idx].messages.length > 1) {
+                    const removedMessage = newLayout[idx].messages.pop();
 
-    useEffect(() => {
-        console.log("YOU")
+                    if (removedMessage) {
+                        setHiddenMessages((prevHiddenMessages) => {
+                            const newHiddenMessages = [...prevHiddenMessages];
+                            newHiddenMessages.unshift(removedMessage);
+                            return newHiddenMessages;
+                        });
 
-        if (lastColumnIndex.current !== null) {
-            const newVisualHeights = [...visualHeights];
-            const newStack = [...stack];
-            const currentColumnIndex = lastColumnIndex.current;
-
-            if (lastCardRef.current) {
-                const cardHeight = lastCardRef.current.offsetHeight;
-                columns[currentColumnIndex][0].height = cardHeight;
-                newVisualHeights[currentColumnIndex] += cardHeight;
-                setVisualHeights(newVisualHeights);
-
-                setHeights(prevHeights => {
-                    const newHeights = [...prevHeights];
-                    newHeights[currentColumnIndex] += cardHeight;
-                    return newHeights;
-                });
-            }
-
-            try {
-                let lastCardHeight = columns[currentColumnIndex][columns[currentColumnIndex].length - 1].height;
-
-                while (newVisualHeights[currentColumnIndex] - lastCardHeight > window.innerHeight && columns[currentColumnIndex].length > 1) {
-                    const removedCard = columns[currentColumnIndex].pop();
-
-                    if (removedCard) {
-                        newVisualHeights[currentColumnIndex] -= removedCard.height;
-                        setVisualHeights(newVisualHeights);
-                        newStack.unshift({ ...removedCard, new: false });
+                        newLayout[idx].visualHeight -= removedMessage.height ?? 0;
                     }
+                }
 
-                    lastCardHeight = columns[currentColumnIndex][columns[currentColumnIndex].length - 1].height;
-                }   
-            } catch (error) {
-                
-            }
-
-            lastCardRef.current = null;
-            setStack(newStack);
+                return newLayout;
+            });
+            setTempMessage(null);
+            setTempHeight(null);
         }
-    }, [columns, lastCardRef.current, lastColumnIndex.current]);
+    }, [tempHeight, tempMessage]);
 
     useEffect(() => {
-        const oldColumns = [...columns];
-        setColumns(Array.from({ length: numColumns }, () => []));
-        setHeights(Array.from({ length: numColumns }, () => 0));
-        setVisualHeights(Array.from({ length: numColumns }, () => 0));
-
-        const cards = oldColumns.flat();
-
-        for (let i = 0; i < cards.length; i++)
-            cards[i].new = false;
-
-        setStack(oldStack => {
-            const newStack = [...oldStack, ...cards ];
-            return newStack;
+        axios.get("/Event/Messages").then((data) => {
+            const messages: Message[] = [...data.data];
+    
+            let i = 0;
+            const processMessage = () => {
+                if (i < messages.length) {
+                    setTempMessage({...messages[i], sentDate: new Date(messages[i].sentDate)});
+                    i++;
+                    setTimeout(processMessage, 1500); // Tempo para garantir atualização do estado
+                }
+            };
+    
+            processMessage();
         });
-    }, [numColumns]);
 
-    (window as any).sendMessage = sendMessage;
+        const interval = setInterval(() => {
+            setHiddenMessages((prevHiddenMessages) => {
+                const newHiddenMessages = [...prevHiddenMessages];
 
-    (window as any).stack = () => { console.log(stack) };
+                if (newHiddenMessages.length) {
+                    const removedMessage = newHiddenMessages.pop();
+                    removedMessage && setTempMessage(removedMessage);
+                }
+
+                return newHiddenMessages;
+            });
+        }, 3000);
+
+        return () => clearInterval(interval);
+    }, []);
+
+    const handleHeightCalculation = (element: HTMLDivElement | null) => {
+        if (element) {
+            setTempHeight(element.offsetHeight);
+        }
+    };
 
     return (
         <>
-            <input type="number" value={numColumns} onChange={(e) => { setNumColumns(Number(e.target.value)) }} />
             <div
-                style={{ gridTemplateColumns: `repeat(${numColumns}, 1fr)` }}
-                className={`grid`}
+                style={{ gridTemplateColumns: `repeat(${colsNumber}, 1fr)` }}
+                className={cn('grid bg-zinc-950 w-full h-screen overflow-hidden absolute')}
             >
-                {columns.map((column, colIndex) => (
-                    <div
-                        key={colIndex}
-                        className={`flex flex-col`}
-                    >
-                        {column.map((msg, msgIndex) => (
-                            <div
-                                key={msgIndex}
-                                ref={msgIndex === 0 && colIndex === lastColumnIndex.current ? lastCardRef : null}
-                                className={`p-4 transition-all duration-300 ease-in-out transform ${msgIndex === 0 && colIndex === lastColumnIndex.current ? msg.new ? 'animate-fade' : 'animate-slide-new' : ''
-                                    } ${msgIndex !== 0 && colIndex === lastColumnIndex.current ? 'animate-slide' : ''
-                                    }`}
-                            >
-                                <div className='bg-gray-800 text-white font-mono p-4 rounded-lg shadow-md'>
-                                    <p>{msg.message}</p>
-                                    <div className="text-gray-400 text-sm mt-2">
-                                        <p>Sent by: {msg.user}</p>
-                                        <p>{msg.sentDate}</p>
-                                        <p>{msg.height}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                {layout.map((linhas, colIndex) => (
+                    <React.Fragment key={colIndex}>
+                        <div className={cn('flex flex-col')}>
+                            {linhas && linhas.messages.map((mensagem, rowIndex) => (
+                                <MessageCard
+                                    message={{ ...mensagem, col: colIndex, row: rowIndex, isNew: rowIndex == 0 && lastColumn == colIndex, isChosenColumn: lastColumn == colIndex }}
+                                    key={`${colIndex}-${rowIndex}`}
+                                />
+                            ))}
+                        </div>
+                    </React.Fragment>
                 ))}
             </div>
+
+            {tempMessage && ReactDOM.createPortal(
+                <div
+                    style={{ gridTemplateColumns: `repeat(${colsNumber}, 1fr)` }}
+                    className={cn('grid w-full h-screen opacity-0')}
+                >
+                    <div className={cn('flex flex-col')}>
+                        <div ref={handleHeightCalculation}>
+                            <MessageCard message={tempMessage} />
+                        </div>
+                    </div>
+                </div>,
+                document.body
+            )}
         </>
     );
-};
-
-export default MessageBoard;
+}
