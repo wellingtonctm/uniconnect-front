@@ -8,8 +8,6 @@ interface Message {
     height?: number;
     isNew?: boolean;
     isChosenColumn?: boolean;
-    row?: number;
-    col?: number;
 };
 
 interface MessageCardProps {
