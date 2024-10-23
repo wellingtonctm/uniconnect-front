@@ -12,12 +12,28 @@ interface Column {
 }
 
 export default function Messages() {
-    const [colsNumber, setColsNumber] = useState<number>(5);
+    const colsNumber = 5;
+    const colors = ['bg-sky-100', 'bg-rose-100', 'bg-yellow-100'];
+    
     const [layout, setLayout] = useState<Column[]>(Array.from({ length: colsNumber }, () => ({ messages: [], visualHeight: 0, height: 0 })));
     const [tempMessage, setTempMessage] = useState<Message | null>(null);
     const [tempHeight, setTempHeight] = useState<number | null>(null);
     const [hiddenMessages, setHiddenMessages] = useState<Message[]>([]);
     const [lastColumn, setLastColumn] = useState<number>(0);
+
+    const getRandomColor = () => {
+        const randomIndex = Math.floor(Math.random() * colors.length);
+        return colors[randomIndex];
+    }
+
+    function shuffleArray<T>(array: T[]): T[] {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
 
     const getShortestColumn = () => {
         let min: number = layout[0].height;
@@ -43,13 +59,13 @@ export default function Messages() {
 
                 tempMessage.height = tempHeight;
                 tempMessage.isNew = true;
-                newLayout[idx].messages.unshift(tempMessage);
+                tempMessage.cor = getRandomColor();
                 newLayout[idx].height += tempHeight;
                 newLayout[idx].visualHeight += tempHeight;
 
                 setLastColumn(idx);
 
-                while (newLayout[idx].visualHeight - (newLayout[idx].messages[newLayout[idx].messages.length - 1].height ?? 0) > window.innerHeight && newLayout[idx].messages.length > 1) {
+                while (newLayout[idx].messages.length > 1 && newLayout[idx].visualHeight - (newLayout[idx].messages[newLayout[idx].messages.length - 1].height ?? 0) > 800) {
                     const removedMessage = newLayout[idx].messages.pop();
 
                     if (removedMessage) {
@@ -63,6 +79,7 @@ export default function Messages() {
                     }
                 }
 
+                newLayout[idx].messages.unshift(tempMessage);
                 return newLayout;
             });
             setTempMessage(null);
@@ -71,29 +88,31 @@ export default function Messages() {
     }, [tempHeight, tempMessage]);
 
     useEffect(() => {
-        // const webSocketService = new WebSocketService('');
+        const webSocketService = new WebSocketService(axios.defaults.baseURL + '/ws');
 
-        // const handleMessage = (message: Message) => {
-        //     setTempMessage({ ...message, sentDate: new Date(message.sentDate) });
-        // };
-
-        // webSocketService.connect(handleMessage, console.error, console.log);
+        webSocketService.connect(
+            (data) => {
+                const dados = { ...data };
+                console.log(dados)
+                setTempMessage({ message: dados.Message, sentDate: new Date(dados.SentDate), user: dados.User });
+            },
+            (error) => {
+                console.error('WebSocket error:', error);
+            },
+            (event) => {
+                console.log('WebSocket closed:', event);
+            }
+        );
 
         axios.get("/Event/Messages").then((data) => {
             const messages: Message[] = [...data.data];
-
-            let i = 0;
-            const processMessage = () => {
-                if (i < messages.length) {
-                    setTempMessage({ ...messages[i], sentDate: new Date(messages[i].sentDate) });
-                    i++;
-                    setTimeout(processMessage, 1500);
-                }
-            };
-
-            processMessage();
+            setHiddenMessages(shuffleArray(messages));
         });
 
+        return () => webSocketService.disconnect();
+    }, []);
+
+    useEffect(() => {
         const interval = setInterval(() => {
             setHiddenMessages((prevHiddenMessages) => {
                 const newHiddenMessages = [...prevHiddenMessages];
@@ -105,13 +124,10 @@ export default function Messages() {
 
                 return newHiddenMessages;
             });
-        }, 3000);
+        }, 1000);
 
-        return () => {
-            // webSocketService.disconnect();
-            clearInterval(interval);
-        }
-    }, []);
+        return () => clearInterval(interval);
+    }, [hiddenMessages]);
 
     const handleHeightCalculation = (element: HTMLDivElement | null) => {
         if (element) {
@@ -121,37 +137,42 @@ export default function Messages() {
 
     return (
         <>
-            <div
-                style={{ gridTemplateColumns: `repeat(${colsNumber}, 1fr)` }}
-                className={cn('grid bg-zinc-950 w-full h-screen overflow-hidden absolute')}
-            >
-                {layout.map((linhas, colIndex) => (
-                    <Fragment key={colIndex}>
-                        <div className={cn('flex flex-col')}>
-                            {linhas && linhas.messages.map((mensagem, rowIndex) => (
-                                <MessageCard
-                                    message={{ ...mensagem, isNew: rowIndex == 0 && lastColumn == colIndex, isChosenColumn: lastColumn == colIndex }}
-                                    key={`${colIndex}-${rowIndex}`}
-                                />
-                            ))}
-                        </div>
-                    </Fragment>
-                ))}
-            </div>
-
-            {tempMessage && ReactDOM.createPortal(
+            <div className="w-screen h-screen bg-blue-950 teste-pattern">
+                <div className="w-full h-[calc(100%-800px)] flex justify-center items-center">
+                    <p className="text-white text-6xl" >JUVENTUDE | <b>IBR</b></p>
+                </div>
                 <div
                     style={{ gridTemplateColumns: `repeat(${colsNumber}, 1fr)` }}
-                    className={cn('grid w-full h-screen opacity-0')}
+                    className={cn('grid w-full h-[800px] overflow-y-hidden absolute')}
                 >
-                    <div className={cn('flex flex-col')}>
-                        <div ref={handleHeightCalculation}>
-                            <MessageCard message={tempMessage} />
+                    {layout.map((linhas, colIndex) => (
+                        <Fragment key={colIndex}>
+                            <div style={{ width: `calc(100vw / ${colsNumber})` }} className={cn(`flex flex-col`)}>
+                                {linhas && linhas.messages.map((mensagem, rowIndex) => (
+                                    <MessageCard
+                                        message={{ ...mensagem, isNew: rowIndex == 0 && lastColumn == colIndex, isChosenColumn: lastColumn == colIndex }}
+                                        key={`${colIndex}-${rowIndex}`}
+                                    />
+                                ))}
+                            </div>
+                        </Fragment>
+                    ))}
+                </div>
+
+                {tempMessage && ReactDOM.createPortal(
+                    <div
+                        style={{ gridTemplateColumns: `repeat(${colsNumber}, 1fr)` }}
+                        className={cn('grid w-full h-screen opacity-0')}
+                    >
+                        <div className={cn('flex flex-col')}>
+                            <div ref={handleHeightCalculation}>
+                                <MessageCard message={tempMessage} />
+                            </div>
                         </div>
-                    </div>
-                </div>,
-                document.body
-            )}
+                    </div>,
+                    document.body
+                )}
+            </div>
         </>
     );
 }

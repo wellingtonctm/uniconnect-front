@@ -1,7 +1,7 @@
 class WebSocketService {
     private socket: WebSocket;
   
-    constructor(private url: string) {
+    constructor(url: string) {
       this.socket = new WebSocket(url);
     }
   

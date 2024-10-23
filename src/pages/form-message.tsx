@@ -15,12 +15,12 @@ import axios from '@/lib/axios'
 
 type Message = {
     id: number
-    text: string
-    timestamp: string
+    message: string
+    sentDate: Date
 }
 
 const schemaMessage = z.object({
-    message: z.string().min(1, { message: 'Messagem muito curta' }).max(100, { message: 'Mensagem muito longa' })
+    message: z.string().min(1, { message: 'Messagem muito curta' }).max(300, { message: 'Mensagem muito longa' })
 })
 
 type MessageSchemaProps = z.infer<typeof schemaMessage>;
@@ -29,7 +29,7 @@ export default function FormMessagey() {
     const scrollAreaRef = useRef<HTMLDivElement | null>(null)
     const endOfMessagesRef = useRef<HTMLDivElement | null>(null)
     const [searchParams, setSearchParams] = useSearchParams()
-    const { user } = useAuth()
+    const { user, logout } = useAuth()
     const { register, handleSubmit, reset, formState: { errors } } = useForm<MessageSchemaProps>({
         resolver: zodResolver(schemaMessage),
     })
@@ -49,10 +49,22 @@ export default function FormMessagey() {
                 "userId": user.id,
                 "content": data.message
             })
-            setMessages([...messages, { id: messages.length + 1, text: data.message, timestamp: new Date().toLocaleString('pt-BR') }])
+            setMessages([...messages, { id: messages.length + 1, message: data.message, sentDate: new Date() }])
             reset()
         }
     }
+
+    useEffect(() => {
+        if (user) {
+            axios.get(`/User/${user.id}/Messages`).then((data) => {
+                const messages: Message[] = [...data.data];
+                setMessages([...messages.map(x => ({ ...x, sentDate: new Date(x.sentDate) }))])
+            });
+        }
+        else {
+            setMessages([]);
+        }
+    }, [user]);
 
     useEffect(() => {
         endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -62,31 +74,32 @@ export default function FormMessagey() {
         <>
             <div className="flex flex-col h-screen bg-background">
                 {/* Cabeçalho fixo */}
-                <header className="flex items-center justify-between bg-zinc-800 text-primary-foreground p-5 fixed top-0 left-0 right-0 z-10">
-                    <h1 className="text-xl font-bold">UNijovem</h1>
-                    <div>@{user?.name}</div>
+                <header className="flex fixed top-0 left-0 right-0 z-10 p-5 items-center justify-between bg-zinc-800 text-primary-foreground">
+                    <h1 className="text-xl font-bold">UniConnect</h1>
+                    <div onClick={logout}>@{user?.name}</div>
                 </header>
 
-                {/* Área de mensagens com rolagem */}
-                <ScrollArea 
-                    className="flex-grow p-4 bg-secondary-foreground mt-[72px] mb-[96px] overflow-y-auto"
+                <ScrollArea
+                    className="flex-grow p-4 bg-secondary-foreground mt-[68px] mb-[112px] overflow-y-auto"
                     ref={scrollAreaRef}
                 >
                     <div className="space-y-4">
                         {messages.map((message) => (
                             <div key={message.id} className="flex flex-col items-end">
                                 <div className="max-w-[70%] rounded-lg p-3 bg-zinc-700 text-primary-foreground">
-                                    {message.text}
+                                    {message.message}
                                 </div>
-                                <p className="text-xs text-gray-500 mt-1">{message.timestamp}</p>
+                                <p className="text-xs text-gray-500 mt-1">{message.sentDate.toLocaleString('pt-BR')}</p>
                             </div>
                         ))}
                         <div ref={endOfMessagesRef} />
                     </div>
                 </ScrollArea>
 
-                {/* Área de input fixo */}
-                <div className="p-4 border-t bg-primary border-primary/50 fixed bottom-0 left-0 right-0 z-10">
+                {/* Área de mensagens com rolagem */}
+                {/*  */}
+
+                <div className="fixed bottom-0 left-0 right-0 p-4 z-10 border-t bg-primary border-primary/50">
                     <form className="flex space-x-2 items-end" onSubmit={handleSubmit(handleSend)}>
                         <div className='flex-1 space-y-2'>
                             <Textarea

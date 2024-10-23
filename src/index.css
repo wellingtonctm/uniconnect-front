@@ -5,6 +5,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
 }
 
 code {
@@ -17,8 +18,15 @@ code {
 @tailwind utilities;
 
 @keyframes fadeInOut {
-  0%, 100% { opacity: 0.2; }
-  50% { opacity: 1; }
+
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+
+  50% {
+    opacity: 1;
+  }
 }
 
 .animate-fade {
@@ -33,50 +41,66 @@ code {
 
 @keyframes zoom {
   0% {
-      transform: scale(1);
+    transform: scale(1);
   }
+
   50% {
-      transform: scale(1.1); /* Slightly larger */
+    transform: scale(1.1);
+    /* Slightly larger */
   }
+
   100% {
-      transform: scale(1); /* Back to original size */
+    transform: scale(1);
+    /* Back to original size */
   }
 }
 
 .animate-zoom {
-  animation: fadeInOut 0.5s ease; /* Adjust the duration as needed */
+  animation: fadeInOut 0.5s ease;
+  /* Adjust the duration as needed */
 }
 
 @keyframes slide {
   0% {
-      transform: translateY(0);
+    transform: translateY(0);
   }
+
   25% {
-      transform: translateY(5%); /* Shift down slightly */
+    transform: translateY(5%);
+    /* Shift down slightly */
   }
+
   100% {
-      transform: translateY(0); /* Return to original position */
+    transform: translateY(0);
+    /* Return to original position */
   }
 }
 
 @keyframes slide-new {
   0% {
-      transform: translateY(-100px); /* Start above the column */
+    transform: translateY(-100px);
+    /* Start above the column */
   }
+
   50% {
-      transform: translateY(20px); /* Slide down a bit */
+    transform: translateY(20px);
+    /* Slide down a bit */
   }
+
   100% {
-      transform: translateY(0); /* Settle into place */
+    transform: translateY(0);
+    /* Settle into place */
   }
 }
 
 .animate-slide {
-  animation: slide 0.5s ease-in-out; /* Smooth transition for other cards */
+  animation: slide 0.5s ease-in-out;
+  /* Smooth transition for other cards */
 }
 
 .animate-slide-new {
-  animation: slide-new 0.5s ease-in-out; /* Smooth transition for the new card */
+  animation: slide-new 0.5s ease-in-out;
+  /* Smooth transition for the new card */
 }
 
 @layer base {
@@ -107,6 +131,7 @@ code {
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
   }
+
   .dark {
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
@@ -139,8 +164,13 @@ code {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
 }
 
+.teste-pattern {
+  background-color: #001752;
+  background-image: url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h16v2h-6v6h6v8H8v-6H2v6H0V0zm4 4h2v2H4V4zm8 8h2v2h-2v-2zm-8 0h2v2H4v-2zm8-8h2v2h-2V4z' fill='%232551b0' fill-opacity='0.4' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
