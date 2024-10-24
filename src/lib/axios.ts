@@ -1,7 +1,11 @@
 import axios from "axios";
 
+const apiUrl = import.meta.env.VITE_BASE_URL;
+
+console.log(apiUrl);
+
 export default axios.create({
-    baseURL: 'https://uniconnect-back.up.railway.app',
+    baseURL: apiUrl,
     headers: {
         'Content-Type': 'application/json'
     }
