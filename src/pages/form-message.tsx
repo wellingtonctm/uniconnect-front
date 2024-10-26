@@ -106,10 +106,12 @@ export default function FormMessagey() {
                                 {...register('message')}
                                 placeholder="Digite uma mensagem"
                                 className="flex-grow bg-primary border-primary-foreground/20 text-primary-foreground/80"
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                onInput={(e) => {
+                                    const input = e.target as HTMLTextAreaElement
+                                    if (input.value.endsWith('\n') && !input.value.endsWith('\n\n')) {
                                         e.preventDefault()
                                         handleSubmit(handleSend)()
+                                        input.value = ''  // Reseta o campo de texto após o envio
                                     }
                                 }}
                             />
