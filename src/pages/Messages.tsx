@@ -21,7 +21,7 @@ interface User {
 }
 
 export default function Messages() {
-    const colsNumber = 5;
+    const colsNumber = 3;
     const colors = ['bg-sky-100', 'bg-rose-100', 'bg-yellow-100'];
 
     const [layout, setLayout] = useState<Column[]>(Array.from({ length: colsNumber }, () => ({ messages: [], visualHeight: 0, height: 0 })));
