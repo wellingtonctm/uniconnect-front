@@ -106,6 +106,12 @@ export default function FormMessagey() {
                                 {...register('message')}
                                 placeholder="Digite uma mensagem"
                                 className="flex-grow bg-primary border-primary-foreground/20 text-primary-foreground/80"
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault()
+                                        handleSubmit(handleSend)()
+                                    }
+                                }}
                             />
                             {errors.message?.message && <p className='text-red-600'>{errors.message?.message}</p>}
                         </div>
