@@ -15,8 +15,8 @@ import axios from '@/lib/axios'
 
 type Message = {
     id: number
-    message: string
-    sentDate: Date
+    content: string
+    sentAt: Date
 }
 
 const schemaMessage = z.object({
@@ -29,7 +29,7 @@ export default function FormMessagey() {
     const scrollAreaRef = useRef<HTMLDivElement | null>(null)
     const endOfMessagesRef = useRef<HTMLDivElement | null>(null)
     const [searchParams, setSearchParams] = useSearchParams()
-    const { user, logout } = useAuth()
+    const { user } = useAuth()
     const { register, handleSubmit, reset, formState: { errors } } = useForm<MessageSchemaProps>({
         resolver: zodResolver(schemaMessage),
     })
@@ -49,7 +49,7 @@ export default function FormMessagey() {
                 "userId": user.id,
                 "content": data.message
             })
-            setMessages([...messages, { id: messages.length + 1, message: data.message, sentDate: new Date() }])
+            setMessages([...messages, { id: messages.length + 1, content: data.message, sentAt: new Date() }])
             reset()
         }
     }
@@ -57,8 +57,8 @@ export default function FormMessagey() {
     useEffect(() => {
         if (user) {
             axios.get(`/User/${user.id}/Messages`).then((data) => {
-                const messages: Message[] = [...data.data];
-                setMessages([...messages.map(x => ({ ...x, sentDate: new Date(x.sentDate) }))])
+                const messages: Message[] = [...data.data.reverse()];
+                setMessages([...messages.map(x => ({ ...x, sentAt: new Date(x.sentAt) }))])
             });
         }
         else {
@@ -72,11 +72,11 @@ export default function FormMessagey() {
 
     return (
         <>
-            <div className="flex flex-col h-screen bg-background">
+            <div className="flex flex-col h-screen w-screen bg-background">
                 {/* Cabeçalho fixo */}
                 <header className="flex fixed top-0 left-0 right-0 z-10 p-5 items-center justify-between bg-zinc-800 text-primary-foreground">
                     <h1 className="text-xl font-bold">UniConnect</h1>
-                    <div onClick={logout}>@{user?.name}</div>
+                    <div>@{user?.name}</div>
                 </header>
 
                 <ScrollArea
@@ -87,9 +87,9 @@ export default function FormMessagey() {
                         {messages.map((message) => (
                             <div key={message.id} className="flex flex-col items-end">
                                 <div className="max-w-[70%] rounded-lg p-3 bg-zinc-700 text-primary-foreground">
-                                    {message.message}
+                                    {message.content}
                                 </div>
-                                <p className="text-xs text-gray-500 mt-1">{message.sentDate.toLocaleString('pt-BR')}</p>
+                                <p className="text-xs text-gray-500 mt-1">{new Date(message.sentAt).toLocaleString('pt-BR')}</p>
                             </div>
                         ))}
                         <div ref={endOfMessagesRef} />

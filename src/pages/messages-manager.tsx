@@ -57,73 +57,75 @@ export default function GestaoMensagens() {
     }
 
     return (
-        <Card className="w-full max-w-4xl mx-auto">
-            <CardHeader>
-                <CardTitle>Gestão de Mensagens</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="flex gap-4 mb-4">
-                    <div className="flex-1 relative">
-                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Pesquisar mensagens..."
-                            value={pesquisa}
-                            onChange={(e) => setPesquisa(e.target.value)}
-                            className="pl-8"
-                        />
-                    </div>
-                    <Select value={filtro} onValueChange={(value: 'todas' | 'lidas' | 'nao-lidas') => setFiltro(value)}>
-                        <SelectTrigger className="w-[180px]">
-                            <Filter className="mr-2 h-4 w-4" />
-                            <SelectValue placeholder="Filtrar mensagens" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="todas">Todas as mensagens</SelectItem>
-                            <SelectItem value="lidas">Mensagens lidas</SelectItem>
-                            <SelectItem value="nao-lidas">Mensagens não lidas</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="space-y-4">
-                    {mensagensFiltradas.map((mensagem) => (
-                        <div key={mensagem.id} className={`p-4 rounded-lg border ${mensagem.lida ? 'bg-muted' : 'bg-card'}`}>
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <h3 className="font-semibold">{mensagem.remetente}</h3>
-                                    <p className="text-sm text-muted-foreground">{mensagem.assunto}</p>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <span className="text-sm text-muted-foreground">{mensagem.data}</span>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                                <MoreVertical className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            {!mensagem.lida && (
-                                                <DropdownMenuItem onClick={() => marcarComoLida(mensagem.id)}>
-                                                    <Mail className="mr-2 h-4 w-4" />
-                                                    <span>Marcar como lida</span>
-                                                </DropdownMenuItem>
-                                            )}
-                                            <DropdownMenuItem onClick={() => arquivarMensagem(mensagem.id)}>
-                                                <Archive className="mr-2 h-4 w-4" />
-                                                <span>Arquivar</span>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => excluirMensagem(mensagem.id)}>
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                <span>Excluir</span>
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                            </div>
-                            <p className="mt-2 text-sm">{mensagem.conteudo}</p>
+        <div className="flex flex-col h-screen w-screen bg-secondary-foreground">
+            <Card className="w-full max-w-[70%] mx-auto my-10">
+                <CardHeader>
+                    <CardTitle>Gestão de Mensagens</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex gap-4 mb-4">
+                        <div className="flex-1 relative">
+                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                            <Input
+                                placeholder="Pesquisar mensagens..."
+                                value={pesquisa}
+                                onChange={(e) => setPesquisa(e.target.value)}
+                                className="pl-8"
+                            />
                         </div>
-                    ))}
-                </div>
-            </CardContent>
-        </Card>
+                        <Select value={filtro} onValueChange={(value: 'todas' | 'lidas' | 'nao-lidas') => setFiltro(value)}>
+                            <SelectTrigger className="w-[180px]">
+                                <Filter className="mr-2 h-4 w-4" />
+                                <SelectValue placeholder="Filtrar mensagens" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="todas">Todas as mensagens</SelectItem>
+                                <SelectItem value="lidas">Mensagens lidas</SelectItem>
+                                <SelectItem value="nao-lidas">Mensagens não lidas</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-4">
+                        {mensagensFiltradas.map((mensagem) => (
+                            <div key={mensagem.id} className={`p-4 rounded-lg border ${mensagem.lida ? 'bg-muted' : 'bg-card'}`}>
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <h3 className="font-semibold">{mensagem.remetente}</h3>
+                                        <p className="text-sm text-muted-foreground">{mensagem.assunto}</p>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-muted-foreground">{mensagem.data}</span>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-8 w-8 p-0">
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                {!mensagem.lida && (
+                                                    <DropdownMenuItem onClick={() => marcarComoLida(mensagem.id)}>
+                                                        <Mail className="mr-2 h-4 w-4" />
+                                                        <span>Marcar como lida</span>
+                                                    </DropdownMenuItem>
+                                                )}
+                                                <DropdownMenuItem onClick={() => arquivarMensagem(mensagem.id)}>
+                                                    <Archive className="mr-2 h-4 w-4" />
+                                                    <span>Arquivar</span>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => excluirMensagem(mensagem.id)}>
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    <span>Excluir</span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                </div>
+                                <p className="mt-2 text-sm">{mensagem.conteudo}</p>
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
     )
 }

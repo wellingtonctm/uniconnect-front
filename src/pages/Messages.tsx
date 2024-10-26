@@ -11,10 +11,19 @@ interface Column {
     height: number;
 }
 
+interface User {
+    id: number
+    eventId: number
+    name: string
+    createdAt: string
+    enabled: boolean
+    messagesNumber: number
+}
+
 export default function Messages() {
     const colsNumber = 5;
     const colors = ['bg-sky-100', 'bg-rose-100', 'bg-yellow-100'];
-    
+
     const [layout, setLayout] = useState<Column[]>(Array.from({ length: colsNumber }, () => ({ messages: [], visualHeight: 0, height: 0 })));
     const [tempMessage, setTempMessage] = useState<Message | null>(null);
     const [tempHeight, setTempHeight] = useState<number | null>(null);
@@ -87,14 +96,57 @@ export default function Messages() {
         }
     }, [tempHeight, tempMessage]);
 
+    const removerMensagem = (id: number) => {
+        setLayout((prevLayout) => {
+            return prevLayout.map((coluna) => {
+                const newMessages = coluna.messages.filter(mensagem => mensagem.id !== id);
+                return {
+                    ...coluna,
+                    messages: newMessages,
+                    visualHeight: coluna.visualHeight - (coluna.messages.find(m => m.id === id)?.height ?? 0),
+                };
+            });
+        });
+
+        setHiddenMessages((prevHiddenMessages) => {
+            return prevHiddenMessages.filter(mensagem => mensagem.id !== id);
+        });
+    }
+
     useEffect(() => {
         const webSocketService = new WebSocketService(axios.defaults.baseURL + '/ws');
 
         webSocketService.connect(
             (data) => {
-                const dados = { ...data };
-                console.log(dados)
-                setTempMessage({ message: dados.Message, sentDate: new Date(dados.SentDate), user: dados.User });
+                if (data.type == "Message") {
+                    const dados: Message = { ...data };
+
+                    if (dados.enabled === true) {
+                        setTempMessage({...dados});
+                    }
+                    else {
+                        removerMensagem(dados.id)
+                    }
+                }
+                else if (data.type == "User") {
+                    console.log(data)
+                    const dados: User = { ...data };
+
+                    axios.get(`/User/${data.id}/Messages`).then((msgs) => {
+                        const messages: Message[] = [...msgs.data];
+
+                        if (dados.enabled) {
+                            messages.forEach((message) => {
+                                message.enabled && setHiddenMessages((prev) => [...prev, {...message}]);
+                            })
+                        }
+                        else {
+                            messages.forEach((message) => {
+                                removerMensagem(message.id)
+                            })
+                        }
+                    });
+                }
             },
             (error) => {
                 console.error('WebSocket error:', error);
