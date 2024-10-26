@@ -67,7 +67,7 @@ export default function UserDetails() {
             </div>
             <div>
               <p className="font-semibold text-[#e4e4e7]">Status:</p>
-              <Badge variant={user.blocked ? "destructive" : "success"} className="mt-1">
+              <Badge variant={user.blocked ? "destructive" : "outline"} className="mt-1">
                 {user.blocked ? 'Bloqueado' : 'Ativo'}
               </Badge>
             </div>
